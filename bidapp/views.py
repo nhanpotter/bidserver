@@ -8,12 +8,12 @@ from .serializers import ShopSerializer
 
 class ShopViewTokenAPIView(APIView):
     def get(self, request, format=None):
-        if 'shop_id' not in request.GET:
+        shop_id = request.query_params.get('shop_id', default=None)
+        if shop_id is None:
             return Response(
                 {'error': ['Need to provide shop_id']},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        shop_id = request.GET['shop_id']
         try:
             shop = Shop.objects.get(shop_id=shop_id)
         except Shop.DoesNotExist:
