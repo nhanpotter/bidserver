@@ -32,10 +32,19 @@ class BidItem(models.Model):
     discount_price = models.PositiveIntegerField()
     image_url = models.URLField()
 
+    @property
+    def current_max_bid(self):
+        transaction_qs = BidTransaction.objects.filter(item=self).order_by('token_bid')
+        if len(transaction_qs) == 0:
+            return 0
+
+        last_transaction = transaction_qs.last()
+        return last_transaction.token_bid
+
 
 class BidTransaction(models.Model):
     item = models.ForeignKey(BidItem, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # attribute
     token_bid = models.PositiveIntegerField()
-    create_time = models.DateTimeField(default=timezone.now)
+    create_time = models.PositiveBigIntegerField()

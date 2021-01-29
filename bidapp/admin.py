@@ -6,3 +6,4 @@ from .models import BidItem, User, Shop, BidTransaction
 admin.site.register(User)
 admin.site.register(Shop)
 admin.site.register(BidItem)
+admin.site.register(BidTransaction)

@@ -1,12 +1,14 @@
 import datetime
-import time
+
 import pytz
+from django.conf import settings
 
 
 def to_unix(python_datetime):
-    return int(time.mktime(python_datetime.timetuple()))
+    return int(python_datetime.timestamp())
 
 
 def to_python_datetime(unix_timestamp):
-    iso_timestamp = datetime.datetime.fromtimestamp(int(unix_timestamp))
-    return iso_timestamp.replace(tzinfo=pytz.timezone('Asia/Singapore'))
+    """From unix timestamp to python datetime with timezone aware"""
+    return datetime.datetime.fromtimestamp(int(unix_timestamp),
+                                           pytz.timezone(settings.TIME_ZONE))

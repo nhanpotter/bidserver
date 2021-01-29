@@ -3,22 +3,20 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import BidItem, Shop
-from .models import User
-from .serializers import BidItemCreateSerializer, BidItemEditSerializer, ShopSerializer
+from .models import BidItem, Shop, User
+from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
+    ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewShopBidItemQuerySerializer
 from .serializers import BidItemSerializer, UserSerializer
 from .utils import *
 
 
 class ShopViewTokenAPIView(APIView):
     def get(self, request, format=None):
-        shop_id = request.query_params.get('shop_id', default=None)
-        if shop_id is None:
-            return Response(
-                {'error': ['Need to provide shop_id']},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        query_serializer = ShopViewTokenQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        shop_id = query_serializer.validated_data.get('shop_id')
         try:
             shop = Shop.objects.get(shop_id=shop_id)
         except Shop.DoesNotExist:
@@ -29,17 +27,13 @@ class ShopViewTokenAPIView(APIView):
 
 class ShopViewShopBidItemAPIView(APIView):
     def get(self, request, format=None):
-        shop_id = request.query_params.get('shop_id', default=None)
-        if shop_id is None:
-            return Response(
-                {'error': ['Need to provide shop_id']},
-                status=status.HTTP_400_BAD_REQUEST)
-        unix_release_date = request.query_params.get('release_date', default=None)
-        if unix_release_date is None:
-            return Response(
-                {'error': ['Need to provide release_date']},
-                status=status.HTTP_400_BAD_REQUEST)
-        release_date = to_python_datetime(unix_release_date)
+        query_serializer = ShopViewShopBidItemQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = query_serializer.validated_data
+        shop_id = validated_data.get('shop_id')
+        release_date = validated_data.get('release_date')
         item_list = BidItem.objects.filter(shop_id=shop_id, release_date=release_date)
         serializer = BidItemSerializer(item_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -63,11 +57,13 @@ class UserViewTokenAPIView(APIView):
 
 class UserViewShopBidItemAPIView(APIView):
     def get(self, request, format=None):
-        shop_id = request.query_params.get('shop_id', default=None)
-        if shop_id is None:
-            return Response({'error': ['Need to provide shop_id']}, status=status.HTTP_400_BAD_REQUEST)
-        now = timezone.now().date()
-        item_list = BidItem.objects.filter(shop_id=shop_id, release_date=now)
+        query_serializer = UserViewShopBidItemQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors,
+                            status=status.HTTP_400_BAD_REQUEST)
+        shop_id = query_serializer.validated_data.get('shop_id')
+        today = timezone.localtime().date()
+        item_list = BidItem.objects.filter(shop_id=shop_id, release_date=today)
         serializer = BidItemSerializer(item_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -105,3 +101,52 @@ class ShopBidItemEditAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProposeBidAPIView(APIView):
+    def post(self, request, format=None):
+        # Create user if not exists
+        user_id = request.data.get('user')
+        if user_id is not None:
+            User.objects.get_or_create(user_id=user_id)
+
+        serializer = BidTransactionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+        item_id = validated_data.get('item_id')
+        shop_id = validated_data.get('shop_id')
+        item = BidItem.objects.get(item_id=item_id, shop__shop_id=shop_id)
+        token_threshold = item.token_threshold
+        token_bid = validated_data.get('token_bid')
+        user = validated_data.get('user')
+
+        # Check if user has enough token to bid
+        if token_bid > user.token:
+            return Response({'error': ['insufficient token']},
+                            status=status.HTTP_400_BAD_REQUEST)
+        # Check if item release date is today
+        today = timezone.localtime().date()
+        if item.release_date != today:
+            return Response({'error': ['item release_date not today']},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if token_bid > token_threshold:
+            return Response({'error': ['token bid > token threshold']},
+                            status=status.HTTP_400_BAD_REQUEST)
+        # Check if user overbid previous token bid
+        if token_bid < token_threshold and token_bid <= item.current_max_bid:
+            return Response({'error': ['token bid must > max bid']},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Deduct user token
+        user.token = user.token - token_bid
+        user.save()
+        # Create Bid Transaction
+        create_time = int(timezone.now().timestamp())
+        serializer.save(item=item, create_time=create_time)
+
+        # TODO: Push notification and refund token if needed to user got outbid
+        # Also check the case where the user outbid themselves
+        return Response(status=status.HTTP_201_CREATED)
