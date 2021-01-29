@@ -39,7 +39,7 @@ class ShopViewShopBidItemAPIView(APIView):
             return Response(
                 {'error': ['Need to provide release_date']},
                 status=status.HTTP_400_BAD_REQUEST)
-        release_date = to_iso(unix_release_date)
+        release_date = to_python_datetime(unix_release_date)
         item_list = BidItem.objects.filter(shop_id=shop_id, release_date=release_date)
         serializer = BidItemSerializer(item_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
