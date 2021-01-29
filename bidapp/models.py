@@ -23,7 +23,7 @@ class BidItem(models.Model):
     # attribute
     token_threshold = models.PositiveIntegerField(default=DEFAULT_TOKEN_THRESHOLD)
     release_date = models.DateField()
-    winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,blank=True)
 
 
 class BidTransaction(models.Model):
