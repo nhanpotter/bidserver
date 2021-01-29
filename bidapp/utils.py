@@ -3,8 +3,10 @@ import time
 import pytz
 
 
-def toUnix(date):
-    return int(time.mktime(date.timetuple()))
+def to_unix(python_datetime):
+    return int(time.mktime(python_datetime.timetuple()))
 
-def toISO(date):
-    return datetime.datetime.fromtimestamp(int(date)).replace(tzinfo=pytz.timezone('Asia/Singapore'))
+
+def to_python_datetime(unix_timestamp):
+    iso_timestamp = datetime.datetime.fromtimestamp(int(unix_timestamp))
+    return iso_timestamp.replace(tzinfo=pytz.timezone('Asia/Singapore'))

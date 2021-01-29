@@ -18,12 +18,19 @@ class Shop(models.Model):
 
 
 class BidItem(models.Model):
-    item_id = models.CharField(primary_key=True, max_length=50)
+    item_id = models.CharField(max_length=50)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
     # attribute
     token_threshold = models.PositiveIntegerField(default=DEFAULT_TOKEN_THRESHOLD)
     release_date = models.DateField()
-    winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,blank=True)
+    winner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+
+    # item attribute
+    name = models.CharField(max_length=255)
+    description = models.TextField()
+    original_price = models.PositiveIntegerField()
+    discount_price = models.PositiveIntegerField()
+    image_url = models.URLField()
 
 
 class BidTransaction(models.Model):
