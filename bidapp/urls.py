@@ -1,11 +1,7 @@
 from django.urls import path
 
 from .views import ShopBidItemCreateAPIView, ShopBidItemEditAPIView, ShopViewShopBidItemAPIView, ShopViewTokenAPIView, \
-<<<<<<< Updated upstream
-    UserViewShopBidItemAPIView, UserViewTokenAPIView, UserProposeBidAPIView
-=======
-    UserViewShopBidItemAPIView, UserViewTokenAPIView, UserViewWinItem
->>>>>>> Stashed changes
+    UserProposeBidAPIView, UserViewShopBidItemAPIView, UserViewTokenAPIView, UserViewWinItem
 
 urlpatterns = [
     path('shop/token/', ShopViewTokenAPIView.as_view(), name='shop_token'),
@@ -15,9 +11,6 @@ urlpatterns = [
 
     path('user/token/', UserViewTokenAPIView.as_view(), name='user_token'),
     path('user/view/', UserViewShopBidItemAPIView.as_view(), name='user_view_shop_item'),
-<<<<<<< Updated upstream
     path('user/bid/', UserProposeBidAPIView.as_view(), name='user_bid'),
-=======
     path('user/win/', UserViewWinItem.as_view(), name='user_win_item'),
->>>>>>> Stashed changes
 ]

@@ -6,19 +6,19 @@ from .constants import DEFAULT_TOKEN_THRESHOLD, TOKEN_PER_DAY
 
 # Create your models here.
 class User(models.Model):
-    user_id = models.CharField(primary_key=True, max_length=50)
+    user_id = models.BigIntegerField(primary_key=True)
     # attribute
     token = models.PositiveIntegerField(default=TOKEN_PER_DAY)
 
 
 class Shop(models.Model):
-    shop_id = models.CharField(primary_key=True, max_length=50)
+    shop_id = models.BigIntegerField(primary_key=True)
     # attribute
     accumulate_token = models.PositiveIntegerField(default=0)
 
 
 class BidItem(models.Model):
-    item_id = models.CharField(max_length=50)
+    item_id = models.AutoField(primary_key=True)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
     # attribute
     token_threshold = models.PositiveIntegerField(default=DEFAULT_TOKEN_THRESHOLD)

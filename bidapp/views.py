@@ -86,18 +86,6 @@ class ShopBidItemEditAPIView(APIView):
     def post(self, request, format=None):
         serializer = BidItemEditSerializer(data=request.data)
         if serializer.is_valid():
-            # Check if item is already created
-            try:
-                validated_data = serializer.validated_data
-                shop = validated_data.get('shop')
-                item_id = request.data.get('item_id')
-                BidItem.objects.get(item_id=item_id, shop=shop)
-            except BidItem.DoesNotExist:
-                return Response(
-                    {'error': ['BidItem need to be created first']},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

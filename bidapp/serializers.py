@@ -17,20 +17,20 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ShopViewTokenQuerySerializer(serializers.Serializer):
-    shop_id = serializers.CharField()
+    shop_id = serializers.IntegerField()
 
 
 class ShopViewShopBidItemQuerySerializer(serializers.Serializer):
-    shop_id = serializers.CharField()
+    shop_id = serializers.IntegerField()
     release_date = serializers.DateField()
 
 
 class UserViewShopBidItemQuerySerializer(serializers.Serializer):
-    shop_id = serializers.CharField()
+    shop_id = serializers.IntegerField()
 
 
 class UserViewWinQuerySerializer(serializers.Serializer):
-    user_id = serializers.CharField()
+    user_id = serializers.IntegerField()
 
 
 class BidItemSerializer(serializers.ModelSerializer):
@@ -47,15 +47,9 @@ class BidItemCreateSerializer(serializers.ModelSerializer):
         fields = ['item_id', 'shop', 'token_threshold', 'release_date', 'winner',
                   'name', 'description', 'original_price', 'discount_price',
                   'image_url']
-        read_only_fields = ['winner']
+        read_only_fields = ['item_id', 'winner']
 
     def validate(self, data):
-        item_id = data.get('item_id')
-        shop = data.get('shop')
-
-        if BidItem.objects.filter(item_id=item_id, shop=shop).exists():
-            raise serializers.ValidationError({'error': ['item already created']})
-
         release_date = data.get('release_date')
         if release_date <= timezone.localtime().date():
             raise serializers.ValidationError({'error': ['release date must > today']})
@@ -73,7 +67,7 @@ class BidItemEditSerializer(serializers.ModelSerializer):
         fields = ['item_id', 'shop', 'token_threshold', 'release_date', 'winner',
                   'name', 'description', 'original_price', 'discount_price',
                   'image_url']
-        read_only_fields = ['winner']
+        read_only_fields = ['shop', 'winner']
         extra_kwargs = {
             'token_threshold': {'required': False},
             'release_date': {'required': False},
@@ -85,6 +79,12 @@ class BidItemEditSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
+        item_id = data.get('item_id')
+        try:
+            BidItem.objects.get(item_id=item_id)
+        except BidItem.DoesNotExist:
+            raise serializers.ValidationError({'error': ['BidItem not exists']})
+
         release_date = data.get('release_date')
         if release_date <= timezone.localtime().date():
             raise serializers.ValidationError({'error': ['release date must > today']})
@@ -94,8 +94,7 @@ class BidItemEditSerializer(serializers.ModelSerializer):
     def save(self):
         validated_data = self.validated_data
         item_id = validated_data.get('item_id')
-        shop = validated_data.get('shop')
-        instance = BidItem.objects.get(item_id=item_id, shop=shop)
+        instance = BidItem.objects.get(item_id=item_id)
 
         instance.token_threshold = validated_data.get('token_threshold', instance.token_threshold)
         instance.release_date = validated_data.get('release_date', instance.release_date)
@@ -109,8 +108,8 @@ class BidItemEditSerializer(serializers.ModelSerializer):
 
 
 class BidTransactionSerializer(serializers.Serializer):
-    item_id = serializers.CharField()
-    shop_id = serializers.CharField()
+    item_id = serializers.IntegerField()
+    shop_id = serializers.IntegerField()
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     token_bid = serializers.IntegerField()
     create_time = serializers.IntegerField(read_only=True)
