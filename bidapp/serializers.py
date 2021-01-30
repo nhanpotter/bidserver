@@ -192,3 +192,7 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = '__all__'
+
+
+class UserViewPastItemQuerySerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()

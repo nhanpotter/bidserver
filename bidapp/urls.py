@@ -3,7 +3,7 @@ from django.urls import path
 from .views import ShopBidItemCreateAPIView, ShopBidItemEditAPIView, ShopViewShopBidItemAPIView, ShopViewTokenAPIView, \
     UserProposeBidAPIView, UserViewBidItemAPIView, UserViewBidItemPersonalAPIView, UserViewPerBidItemAPIView, \
     UserViewShopBidItemAPIView, UserViewTokenAPIView, UserViewWinItemAPIView, ShopViewAllAPIView, ShopViewItemAPIView, \
-    UserNotificationAPIView
+    UserNotificationAPIView, UserViewPastItemAPIView
 
 urlpatterns = [
     path('shop/token/', ShopViewTokenAPIView.as_view(), name='shop_token'),
@@ -20,6 +20,7 @@ urlpatterns = [
     path('user/view_all/', UserViewBidItemAPIView.as_view(), name='user_view_item'),
     path('user/view_all_personal/', UserViewBidItemPersonalAPIView.as_view(), name='user_view_all_personal'),
     path('user/view_per_item/', UserViewPerBidItemAPIView.as_view(), name='user_view_per_item'),
+    path('user/view_past_item/', UserViewPastItemAPIView.as_view(), name='user_view_past_item'),
 
     path('user/notification/', UserNotificationAPIView.as_view(), name='notification'),
 ]

@@ -9,7 +9,7 @@ from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTran
     ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewBidItemPersonalQuerySerializer, \
     UserViewBidItemPersonalSerializer, UserViewPerBidItemQuerySerializer, UserViewShopBidItemQuerySerializer, \
     UserViewWinQuerySerializer, ShopViewAllQuerySerializer, ShopViewPerItemQuerySerializer, \
-    UserNotificationQuerySerializer, NotificationSerializer
+    UserNotificationQuerySerializer, NotificationSerializer, UserViewPastItemQuerySerializer
 from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSerializer
 
 
@@ -270,4 +270,19 @@ class UserNotificationAPIView(APIView):
 
         notifications = Notification.objects.filter(user__user_id=user_id).order_by('-create_time')
         serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserViewPastItemAPIView(APIView):
+    @csrf_exempt
+    def get(self, request):
+        query_serializer = UserViewPastItemQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_id = query_serializer.validated_data.get('user_id')
+        today = timezone.localtime().date()
+        item_list = BidItem.objects.filter(release_date__lt=today)
+        serializer = UserViewBidItemPersonalSerializer(item_list, many=True,
+                                                       context={'user_id': user_id})
         return Response(serializer.data, status=status.HTTP_200_OK)
