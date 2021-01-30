@@ -146,3 +146,23 @@ class UserViewBidItemSerializer(serializers.ModelSerializer):
         items = BidItem.objects.filter(shop=obj, release_date=today)
         serializer = BidItemSerializer(items, many=True)
         return serializer.data
+
+
+class UserViewBidItemPersonalQuerySerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+
+
+class UserViewBidItemPersonalSerializer(serializers.ModelSerializer):
+    user_participated = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BidItem
+        fields = ['item_id', 'shop', 'token_threshold', 'release_date', 'winner',
+                  'name', 'description', 'original_price', 'discount_price',
+                  'image_url', 'current_max_bid', 'user_participated']
+
+    def get_user_participated(self, obj):
+        user_id = self.context.get('user_id')
+        if BidTransaction.objects.filter(user__user_id=user_id, item=obj).exists():
+            return True
+        return False

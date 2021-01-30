@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from .models import BidItem, BidTransaction, Shop, User
 from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
     ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewShopBidItemQuerySerializer, \
-    UserViewWinQuerySerializer
+    UserViewWinQuerySerializer, UserViewBidItemPersonalQuerySerializer, UserViewBidItemPersonalSerializer
 from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSerializer
 
 
@@ -131,33 +131,8 @@ class UserProposeBidAPIView(APIView):
         if current_token_bid > token_threshold:
             return Response({'error': ['token bid > token threshold']},
                             status=status.HTTP_400_BAD_REQUEST)
-        # Check if user bid > user previous bid
-        user_transaction_qs = BidTransaction.objects.filter(item=item, user=user).order_by('create_time')
-        if user_transaction_qs.exists():
-            previous_token_bid = user_transaction_qs.last().token_bid
-            if previous_token_bid == item.token_threshold or current_token_bid <= previous_token_bid:
-                return Response({'error': ['token bid > previous bid']},
-                                status=status.HTTP_400_BAD_REQUEST)
 
-        # Check if user overeate user if not exists
-        user_id = request.data.get('user')
-        if user_id is not None:
-            User.objects.get_or_create(user_id=user_id)
-
-        serializer = BidTransactionSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        validated_data = serializer.validated_data
-        item_id = validated_data.get('item_id')
-        item = BidItem.objects.get(item_id=item_id)
-        token_threshold = item.token_threshold
-        current_token_bid = validated_data.get('token_bid')
-        user = validated_data.get('user')
-
-        # TODO: Check if current time > 23:59:00
-
-        # Check if user has enough token to bidrbid previous token bid
+        # Check if user has enough token to outbid previous token bid
         current_max_bid = item.current_max_bid
         if current_token_bid < token_threshold and current_token_bid <= current_max_bid:
             return Response({'error': ['token bid must > max bid']},
@@ -187,7 +162,7 @@ class UserProposeBidAPIView(APIView):
         return Response(status=status.HTTP_201_CREATED)
 
 
-class UserViewWinItem(APIView):
+class UserViewWinItemAPIView(APIView):
     @csrf_exempt
     def get(self, request, format=None):
         query_serializer = UserViewWinQuerySerializer(data=request.query_params)
@@ -204,4 +179,19 @@ class UserViewBidItemAPIView(APIView):
     @csrf_exempt
     def get(self, request, format=None):
         serializer = UserViewBidItemSerializer(Shop.objects.all(), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserViewBidItemPersonalAPIView(APIView):
+    @csrf_exempt
+    def get(self, request):
+        query_serializer = UserViewBidItemPersonalQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_id = query_serializer.validated_data.get('user_id')
+        today = timezone.localtime().date()
+        item_list = BidItem.objects.filter(release_date=today)
+        serializer = UserViewBidItemPersonalSerializer(item_list, many=True,
+                                                       context={'user_id': user_id})
         return Response(serializer.data, status=status.HTTP_200_OK)
