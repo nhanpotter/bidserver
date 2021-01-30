@@ -3,9 +3,10 @@ import random
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from django.conf import settings
+from django.utils import timezone
 
 from .constants import TOKEN_PER_DAY
-from .models import BidItem, User
+from .models import BidItem, Notification, User
 
 
 def scheduler_task():
@@ -19,6 +20,15 @@ def scheduler_task():
             winner = random.choice(max_bid_users)
             item.winner = winner
             item.save()
+
+            # Send notification to winner
+            title = "Winner"
+            content = item.get_winner_content()
+            create_time = int(timezone.now().timestamp())
+            Notification.objects.create(user=winner, item=item, title=title,
+                                        content=content, create_time=create_time)
+            winner.unseen_noti_no = winner.unseen_noti_no + 1
+            winner.save()
 
             # Add token to shop
             shop = item.shop

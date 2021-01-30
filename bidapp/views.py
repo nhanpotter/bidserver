@@ -4,11 +4,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import BidItem, Shop, User
+from .models import BidItem, Shop, User, Notification
 from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
     ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewBidItemPersonalQuerySerializer, \
     UserViewBidItemPersonalSerializer, UserViewPerBidItemQuerySerializer, UserViewShopBidItemQuerySerializer, \
-    UserViewWinQuerySerializer, ShopViewAllQuerySerializer, ShopViewPerItemQuerySerializer
+    UserViewWinQuerySerializer, ShopViewAllQuerySerializer, ShopViewPerItemQuerySerializer, \
+    UserNotificationQuerySerializer, NotificationSerializer
 from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSerializer
 
 
@@ -183,9 +184,16 @@ class UserProposeBidAPIView(APIView):
             outbid_user.token = outbid_user.token + current_max_bid
             outbid_user.save()
 
-        if len(max_bid_users) == 1:
-            # TODO: Push notification to user got outbid
-            pass
+        # Send notification to user got outbid
+        if outbid_user is not None:
+            title = "Outbid"
+            content = item.get_outbid_content()
+            create_time = int(timezone.now().timestamp())
+            Notification.objects.create(item=item, user=outbid_user,
+                                        title=title, content=content,
+                                        create_time=create_time)
+            outbid_user.unseen_noti_no = outbid_user.unseen_noti_no + 1
+            outbid_user.save()
 
         # Create Bid Transaction
         create_time = int(timezone.now().timestamp())
@@ -246,3 +254,28 @@ class UserViewPerBidItemAPIView(APIView):
 
         serializer = UserViewBidItemPersonalSerializer(item, context={'user_id': user_id})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserNotificationAPIView(APIView):
+    @csrf_exempt
+    def get(self, request):
+        query_serializer = UserNotificationQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_id = query_serializer.validated_data.get('user_id')
+        notifications = Notification.objects.filter(user__user_id=user_id).order_by('-create_time')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @csrf_exempt
+    def post(self, request):
+        query_serializer = UserNotificationQuerySerializer(data=request.data)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_id = query_serializer.validated_data.get('user_id')
+        user = User.objects.get(user_id=user_id)
+        user.unseen_noti_no = 0
+        user.save()
+        return Response(status=status.HTTP_200_OK)

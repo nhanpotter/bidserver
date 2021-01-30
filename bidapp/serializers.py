@@ -1,7 +1,7 @@
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import BidItem, BidTransaction, Shop, User
+from .models import BidItem, BidTransaction, Shop, User, Notification
 
 
 class ShopSerializer(serializers.ModelSerializer):
@@ -189,3 +189,12 @@ class ShopViewAllQuerySerializer(serializers.Serializer):
 
 class ShopViewPerItemQuerySerializer(serializers.Serializer):
     item_id = serializers.IntegerField()
+
+
+class UserNotificationQuerySerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = '__all__'

@@ -10,6 +10,7 @@ class User(models.Model):
     user_id = models.BigIntegerField(primary_key=True)
     # attribute
     token_balance = models.PositiveIntegerField(default=TOKEN_PER_DAY)
+    unseen_noti_no = models.PositiveIntegerField(default=0)
 
 
 class Shop(models.Model):
@@ -61,10 +62,24 @@ class BidItem(models.Model):
         max_bid_transaction_qs = transaction_qs.filter(token_bid=current_max_bid)
         return [trans.user for trans in max_bid_transaction_qs]
 
+    def get_outbid_content(self):
+        return 'You got outbid for item {}.'.format(self.name)
+
+    def get_winner_content(self):
+        return 'You have successfully order item {} at a discount price.'.format(self.name)
 
 class BidTransaction(models.Model):
     item = models.ForeignKey(BidItem, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     # attribute
     token_bid = models.PositiveIntegerField()
+    create_time = models.PositiveBigIntegerField()
+
+
+class Notification(models.Model):
+    item = models.ForeignKey(BidItem, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    # attribute
+    title = models.CharField(max_length=255)
+    content = models.TextField()
     create_time = models.PositiveBigIntegerField()
