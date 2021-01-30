@@ -5,7 +5,8 @@ from rest_framework.views import APIView
 
 from .models import BidItem, Shop, User
 from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
-    ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewShopBidItemQuerySerializer
+    ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewShopBidItemQuerySerializer, \
+    UserViewWinQuerySerializer
 from .serializers import BidItemSerializer, UserSerializer
 from .utils import *
 
@@ -150,3 +151,15 @@ class UserProposeBidAPIView(APIView):
         # TODO: Push notification and refund token if needed to user got outbid
         # Also check the case where the user outbid themselves
         return Response(status=status.HTTP_201_CREATED)
+
+
+class UserViewWinItem(APIView):
+    def get(self, request, format=None):
+        query_serializer = UserViewWinQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        user_id = query_serializer.validated_data.get('user_id')
+        item_list = BidItem.objects.filter(winner=user_id)
+        serializer = BidItemSerializer(item_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

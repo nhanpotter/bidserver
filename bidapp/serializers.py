@@ -29,6 +29,10 @@ class UserViewShopBidItemQuerySerializer(serializers.Serializer):
     shop_id = serializers.CharField()
 
 
+class UserViewWinQuerySerializer(serializers.Serializer):
+    user_id = serializers.CharField()
+
+
 class BidItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = BidItem
