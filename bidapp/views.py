@@ -3,12 +3,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import BidItem, Shop, User
+from .models import BidItem, BidTransaction, Shop, User
 from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
     ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewShopBidItemQuerySerializer, \
     UserViewWinQuerySerializer
 from .serializers import BidItemSerializer, UserSerializer
-from .utils import *
 
 
 class ShopViewTokenAPIView(APIView):
@@ -137,7 +136,15 @@ class UserProposeBidAPIView(APIView):
             return Response({'error': ['token bid > token threshold']},
                             status=status.HTTP_400_BAD_REQUEST)
         # Check if user overbid previous token bid
-        if token_bid < token_threshold and token_bid <= item.current_max_bid:
+        outbid_user = None
+        current_max_bid = 0
+        transaction_qs = BidTransaction.objects.filter(item=self).order_by('token_bid')
+        if len(transaction_qs) != 0:
+            last_transaction = transaction_qs.last()
+            outbid_user = last_transaction.user
+            current_max_bid = last_transaction.token_bid
+
+        if token_bid < token_threshold and token_bid <= current_max_bid:
             return Response({'error': ['token bid must > max bid']},
                             status=status.HTTP_400_BAD_REQUEST)
 
@@ -148,8 +155,14 @@ class UserProposeBidAPIView(APIView):
         create_time = int(timezone.now().timestamp())
         serializer.save(item=item, create_time=create_time)
 
-        # TODO: Push notification and refund token if needed to user got outbid
-        # Also check the case where the user outbid themselves
+        if outbid_user is not None and current_max_bid < token_threshold:
+            outbid_user.token = outbid_user.token + current_max_bid
+            outbid_user.save()
+
+        if outbid_user != user:
+            # TODO: Push notification to user got outbid
+            pass
+
         return Response(status=status.HTTP_201_CREATED)
 
 
