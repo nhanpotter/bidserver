@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -11,6 +12,7 @@ from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSeria
 
 
 class ShopViewTokenAPIView(APIView):
+    @csrf_exempt
     def get(self, request, format=None):
         query_serializer = ShopViewTokenQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
@@ -26,6 +28,7 @@ class ShopViewTokenAPIView(APIView):
 
 
 class ShopViewShopBidItemAPIView(APIView):
+    @csrf_exempt
     def get(self, request, format=None):
         query_serializer = ShopViewShopBidItemQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
@@ -40,6 +43,7 @@ class ShopViewShopBidItemAPIView(APIView):
 
 
 class UserViewTokenAPIView(APIView):
+    @csrf_exempt
     def get(self, request, format=None):
         user_id = request.query_params.get('user_id', default=None)
         if user_id is None:
@@ -56,6 +60,7 @@ class UserViewTokenAPIView(APIView):
 
 
 class UserViewShopBidItemAPIView(APIView):
+    @csrf_exempt
     def get(self, request, format=None):
         query_serializer = UserViewShopBidItemQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
@@ -83,6 +88,7 @@ class ShopBidItemCreateAPIView(APIView):
 
 
 class ShopBidItemEditAPIView(APIView):
+    @csrf_exempt
     def post(self, request, format=None):
         serializer = BidItemEditSerializer(data=request.data)
         if serializer.is_valid():
@@ -92,6 +98,7 @@ class ShopBidItemEditAPIView(APIView):
 
 
 class UserProposeBidAPIView(APIView):
+    @csrf_exempt
     def post(self, request, format=None):
         # Create user if not exists
         user_id = request.data.get('user')
@@ -181,6 +188,7 @@ class UserProposeBidAPIView(APIView):
 
 
 class UserViewWinItem(APIView):
+    @csrf_exempt
     def get(self, request, format=None):
         query_serializer = UserViewWinQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
@@ -193,6 +201,7 @@ class UserViewWinItem(APIView):
 
 
 class UserViewBidItemAPIView(APIView):
+    @csrf_exempt
     def get(self, request, format=None):
         serializer = UserViewBidItemSerializer(Shop.objects.all(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
