@@ -1,8 +1,8 @@
 from django.urls import path
 
 from .views import ShopBidItemCreateAPIView, ShopBidItemEditAPIView, ShopViewShopBidItemAPIView, ShopViewTokenAPIView, \
-    UserProposeBidAPIView, UserViewShopBidItemAPIView, UserViewTokenAPIView, UserViewWinItemAPIView, UserViewBidItemAPIView, \
-    UserViewBidItemPersonalAPIView
+    UserProposeBidAPIView, UserViewBidItemAPIView, UserViewBidItemPersonalAPIView, UserViewPerBidItemAPIView, \
+    UserViewShopBidItemAPIView, UserViewTokenAPIView, UserViewWinItemAPIView
 
 urlpatterns = [
     path('shop/token/', ShopViewTokenAPIView.as_view(), name='shop_token'),
@@ -15,5 +15,6 @@ urlpatterns = [
     path('user/bid/', UserProposeBidAPIView.as_view(), name='user_bid'),
     path('user/win/', UserViewWinItemAPIView.as_view(), name='user_win_item'),
     path('user/view_all/', UserViewBidItemAPIView.as_view(), name='user_view_item'),
-    path('user/view_all_personal/', UserViewBidItemPersonalAPIView.as_view(), name='user_view_all_personal')
+    path('user/view_all_personal/', UserViewBidItemPersonalAPIView.as_view(), name='user_view_all_personal'),
+    path('user/view_per_item/', UserViewPerBidItemAPIView.as_view(), name='user_view_per_item'),
 ]

@@ -175,3 +175,8 @@ class UserViewBidItemPersonalSerializer(serializers.ModelSerializer):
             if bidder.user_id == user_id:
                 return obj.current_max_bid
         return None
+
+
+class UserViewPerBidItemQuerySerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    item_id = serializers.IntegerField()

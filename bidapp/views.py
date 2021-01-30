@@ -4,10 +4,11 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import BidItem, BidTransaction, Shop, User
+from .models import BidItem, Shop, User
 from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
-    ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewShopBidItemQuerySerializer, \
-    UserViewWinQuerySerializer, UserViewBidItemPersonalQuerySerializer, UserViewBidItemPersonalSerializer
+    ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewBidItemPersonalQuerySerializer, \
+    UserViewBidItemPersonalSerializer, UserViewPerBidItemQuerySerializer, UserViewShopBidItemQuerySerializer, \
+    UserViewWinQuerySerializer
 from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSerializer
 
 
@@ -194,4 +195,23 @@ class UserViewBidItemPersonalAPIView(APIView):
         item_list = BidItem.objects.filter(release_date=today)
         serializer = UserViewBidItemPersonalSerializer(item_list, many=True,
                                                        context={'user_id': user_id})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserViewPerBidItemAPIView(APIView):
+    @csrf_exempt
+    def get(self, request):
+        query_serializer = UserViewPerBidItemQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = query_serializer.validated_data
+        user_id = validated_data.get('user_id')
+        item_id = validated_data.get('item_id')
+        try:
+            item = BidItem.objects.get(item_id=item_id)
+        except BidItem.DoesNotExist:
+            return Response({'error': 'BidItem not exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = UserViewBidItemPersonalSerializer(item, context={'user_id': user_id})
         return Response(serializer.data, status=status.HTTP_200_OK)
