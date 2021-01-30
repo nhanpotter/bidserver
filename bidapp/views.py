@@ -199,7 +199,7 @@ class UserProposeBidAPIView(APIView):
         create_time = int(timezone.now().timestamp())
         serializer.save(item=item, create_time=create_time)
 
-        return Response(status=status.HTTP_201_CREATED)
+        return Response({}, status=status.HTTP_201_CREATED)
 
 
 class UserViewWinItemAPIView(APIView):
@@ -278,4 +278,4 @@ class UserNotificationAPIView(APIView):
         user = User.objects.get(user_id=user_id)
         user.unseen_noti_no = 0
         user.save()
-        return Response(status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_200_OK)
