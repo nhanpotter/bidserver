@@ -12,7 +12,8 @@ from .models import BidItem, Notification, User
 def scheduler_task():
     """Choose winner, add token to shop and reset user token"""
     # Choose winner for each item and add token to shop
-    item_qs = BidItem.objects.all()
+    today = timezone.localtime().date()
+    item_qs = BidItem.objects.filter(release_date=today)
     for item in item_qs:
         max_bid_users = item.get_max_bid_users()
         if len(max_bid_users) != 0:
