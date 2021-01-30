@@ -154,6 +154,7 @@ class UserViewBidItemPersonalQuerySerializer(serializers.Serializer):
 
 class UserViewBidItemPersonalSerializer(serializers.ModelSerializer):
     user_participated = serializers.SerializerMethodField()
+    user_token_bid = serializers.SerializerMethodField()
 
     class Meta:
         model = BidItem
@@ -166,3 +167,11 @@ class UserViewBidItemPersonalSerializer(serializers.ModelSerializer):
         if BidTransaction.objects.filter(user__user_id=user_id, item=obj).exists():
             return True
         return False
+
+    def get_user_token_bid(self, obj):
+        user_id = self.context.get('user_id')
+        max_bidders = obj.get_max_bid_users()
+        for bidder in max_bidders:
+            if bidder.user_id == user_id:
+                return obj.current_max_bid
+        return None

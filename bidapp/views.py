@@ -13,7 +13,7 @@ from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSeria
 
 class ShopViewTokenAPIView(APIView):
     @csrf_exempt
-    def get(self, request, format=None):
+    def get(self, request):
         query_serializer = ShopViewTokenQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
             return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -29,7 +29,7 @@ class ShopViewTokenAPIView(APIView):
 
 class ShopViewShopBidItemAPIView(APIView):
     @csrf_exempt
-    def get(self, request, format=None):
+    def get(self, request):
         query_serializer = ShopViewShopBidItemQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
             return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -44,7 +44,7 @@ class ShopViewShopBidItemAPIView(APIView):
 
 class UserViewTokenAPIView(APIView):
     @csrf_exempt
-    def get(self, request, format=None):
+    def get(self, request):
         user_id = request.query_params.get('user_id', default=None)
         if user_id is None:
             return Response(
@@ -61,7 +61,7 @@ class UserViewTokenAPIView(APIView):
 
 class UserViewShopBidItemAPIView(APIView):
     @csrf_exempt
-    def get(self, request, format=None):
+    def get(self, request):
         query_serializer = UserViewShopBidItemQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
             return Response(query_serializer.errors,
@@ -74,7 +74,7 @@ class UserViewShopBidItemAPIView(APIView):
 
 
 class ShopBidItemCreateAPIView(APIView):
-    def post(self, request, format=None):
+    def post(self, request):
         # Create Shop if it does not exist
         shop_id = request.data.get('shop')
         if shop_id is not None:
@@ -89,7 +89,7 @@ class ShopBidItemCreateAPIView(APIView):
 
 class ShopBidItemEditAPIView(APIView):
     @csrf_exempt
-    def post(self, request, format=None):
+    def post(self, request):
         serializer = BidItemEditSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -99,7 +99,7 @@ class ShopBidItemEditAPIView(APIView):
 
 class UserProposeBidAPIView(APIView):
     @csrf_exempt
-    def post(self, request, format=None):
+    def post(self, request):
         # Create user if not exists
         user_id = request.data.get('user')
         if user_id is not None:
@@ -164,7 +164,7 @@ class UserProposeBidAPIView(APIView):
 
 class UserViewWinItemAPIView(APIView):
     @csrf_exempt
-    def get(self, request, format=None):
+    def get(self, request):
         query_serializer = UserViewWinQuerySerializer(data=request.query_params)
         if not query_serializer.is_valid():
             return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -177,7 +177,7 @@ class UserViewWinItemAPIView(APIView):
 
 class UserViewBidItemAPIView(APIView):
     @csrf_exempt
-    def get(self, request, format=None):
+    def get(self, request):
         serializer = UserViewBidItemSerializer(Shop.objects.all(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
