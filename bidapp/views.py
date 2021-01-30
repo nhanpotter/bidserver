@@ -264,18 +264,10 @@ class UserNotificationAPIView(APIView):
             return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         user_id = query_serializer.validated_data.get('user_id')
-        notifications = Notification.objects.filter(user__user_id=user_id).order_by('-create_time')
-        serializer = NotificationSerializer(notifications, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    @csrf_exempt
-    def post(self, request):
-        query_serializer = UserNotificationQuerySerializer(data=request.data)
-        if not query_serializer.is_valid():
-            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        user_id = query_serializer.validated_data.get('user_id')
         user = User.objects.get(user_id=user_id)
         user.unseen_noti_no = 0
         user.save()
-        return Response({}, status=status.HTTP_200_OK)
+
+        notifications = Notification.objects.filter(user__user_id=user_id).order_by('-create_time')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
