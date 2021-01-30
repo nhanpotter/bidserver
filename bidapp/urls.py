@@ -13,7 +13,7 @@ urlpatterns = [
     path('shop/view_all/', ShopViewAllAPIView.as_view(), name='shop_view_all'),
     path('shop/view_item/', ShopViewItemAPIView.as_view(), name='shop_view_item'),
 
-    path('user/token/', UserViewTokenAPIView.as_view(), name='user_token'),
+    path('user/info/', UserViewTokenAPIView.as_view(), name='user_info'),
     path('user/view_by_shop/', UserViewShopBidItemAPIView.as_view(), name='user_view_shop_item'),
     path('user/bid/', UserProposeBidAPIView.as_view(), name='user_bid'),
     path('user/win/', UserViewWinItemAPIView.as_view(), name='user_win_item'),
