@@ -38,7 +38,7 @@ class BidItemSerializer(serializers.ModelSerializer):
         model = BidItem
         fields = ['item_id', 'shop', 'token_threshold', 'release_date', 'winner',
                   'name', 'description', 'original_price', 'discount_price',
-                  'image_url', 'current_max_bid']
+                  'image_url', 'current_max_bid', 'participant_no', 'threshold_bidder_no']
 
 
 class BidItemCreateSerializer(serializers.ModelSerializer):

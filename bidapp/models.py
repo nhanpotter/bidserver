@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Count
 from django.utils import timezone
 
 from .constants import DEFAULT_TOKEN_THRESHOLD, TOKEN_PER_DAY
@@ -40,6 +41,15 @@ class BidItem(models.Model):
 
         last_transaction = transaction_qs.last()
         return last_transaction.token_bid
+
+    @property
+    def participant_no(self):
+        return len(BidTransaction.objects.filter(item=self).values('user').distinct())
+
+    @property
+    def threshold_bidder_no(self):
+        threshold = self.token_threshold
+        return len(BidTransaction.objects.filter(item=self, token_bid=threshold).values('user').distinct())
 
     def get_max_bid_users(self):
         transaction_qs = BidTransaction.objects.filter(item=self)
