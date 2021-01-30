@@ -79,12 +79,6 @@ class BidItemEditSerializer(serializers.ModelSerializer):
         }
 
     def validate(self, data):
-        item_id = data.get('item_id')
-        try:
-            BidItem.objects.get(item_id=item_id)
-        except BidItem.DoesNotExist:
-            raise serializers.ValidationError({'error': ['BidItem not exists']})
-
         release_date = data.get('release_date')
         if release_date <= timezone.localtime().date():
             raise serializers.ValidationError({'error': ['release date must > today']})
