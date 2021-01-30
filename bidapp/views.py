@@ -8,7 +8,7 @@ from .models import BidItem, Shop, User
 from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
     ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewBidItemPersonalQuerySerializer, \
     UserViewBidItemPersonalSerializer, UserViewPerBidItemQuerySerializer, UserViewShopBidItemQuerySerializer, \
-    UserViewWinQuerySerializer
+    UserViewWinQuerySerializer, ShopViewAllQuerySerializer, ShopViewPerItemQuerySerializer
 from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSerializer
 
 
@@ -43,6 +43,61 @@ class ShopViewShopBidItemAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class ShopBidItemCreateAPIView(APIView):
+    @csrf_exempt
+    def post(self, request):
+        # Create Shop if it does not exist
+        shop_id = request.data.get('shop')
+        if shop_id is not None:
+            Shop.objects.get_or_create(shop_id=shop_id)
+
+        serializer = BidItemCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShopBidItemEditAPIView(APIView):
+    @csrf_exempt
+    def post(self, request):
+        serializer = BidItemEditSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ShopViewAllAPIView(APIView):
+    @csrf_exempt
+    def get(self, request):
+        # TODO: Create shop if not init
+        query_serializer = ShopViewAllQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        shop_id = query_serializer.validated_data.get('shop_id')
+        item_qs = BidItem.objects.filter(shop__shop_id=shop_id).order_by('release_date')
+        serializer = BidItemSerializer(item_qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ShopViewItemAPIView(APIView):
+    @csrf_exempt
+    def get(self, request):
+        query_serializer = ShopViewPerItemQuerySerializer(data=request.query_params)
+        if not query_serializer.is_valid():
+            return Response(query_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        item_id = query_serializer.validated_data.get('item_id')
+        try:
+            item = BidItem.objects.get(item_id=item_id)
+        except BidItem.DoesNotExist:
+            return Response({'error': 'BidItem not exists'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = BidItemSerializer(item)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 class UserViewTokenAPIView(APIView):
     @csrf_exempt
     def get(self, request):
@@ -72,30 +127,6 @@ class UserViewShopBidItemAPIView(APIView):
         item_list = BidItem.objects.filter(shop_id=shop_id, release_date=today)
         serializer = BidItemSerializer(item_list, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class ShopBidItemCreateAPIView(APIView):
-    def post(self, request):
-        # Create Shop if it does not exist
-        shop_id = request.data.get('shop')
-        if shop_id is not None:
-            Shop.objects.get_or_create(shop_id=shop_id)
-
-        serializer = BidItemCreateSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class ShopBidItemEditAPIView(APIView):
-    @csrf_exempt
-    def post(self, request):
-        serializer = BidItemEditSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class UserProposeBidAPIView(APIView):
