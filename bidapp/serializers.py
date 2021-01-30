@@ -160,7 +160,7 @@ class UserViewBidItemPersonalSerializer(serializers.ModelSerializer):
         model = BidItem
         fields = ['item_id', 'shop', 'token_threshold', 'release_date', 'winner',
                   'name', 'description', 'original_price', 'discount_price',
-                  'image_url', 'current_max_bid', 'user_participated']
+                  'image_url', 'current_max_bid', 'user_participated', 'user_token_bid']
 
     def get_user_participated(self, obj):
         user_id = self.context.get('user_id')
