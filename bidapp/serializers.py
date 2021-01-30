@@ -109,16 +109,14 @@ class BidItemEditSerializer(serializers.ModelSerializer):
 
 class BidTransactionSerializer(serializers.Serializer):
     item_id = serializers.IntegerField()
-    shop_id = serializers.IntegerField()
     user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     token_bid = serializers.IntegerField()
     create_time = serializers.IntegerField(read_only=True)
 
     def validate(self, data):
         item_id = data.get('item_id')
-        shop_id = data.get('shop_id')
         try:
-            BidItem.objects.get(item_id=item_id, shop__shop_id=shop_id)
+            BidItem.objects.get(item_id=item_id)
         except BidItem.DoesNotExist:
             raise serializers.ValidationError({'error': ['item does not exists']})
 

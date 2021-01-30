@@ -8,7 +8,7 @@ from .constants import DEFAULT_TOKEN_THRESHOLD, TOKEN_PER_DAY
 class User(models.Model):
     user_id = models.BigIntegerField(primary_key=True)
     # attribute
-    token = models.PositiveIntegerField(default=TOKEN_PER_DAY)
+    token_balance = models.PositiveIntegerField(default=TOKEN_PER_DAY)
 
 
 class Shop(models.Model):
@@ -34,12 +34,22 @@ class BidItem(models.Model):
 
     @property
     def current_max_bid(self):
-        transaction_qs = BidTransaction.objects.filter(item=self).order_by('token_bid')
+        transaction_qs = BidTransaction.objects.filter(item=self).order_by('create_time')
         if len(transaction_qs) == 0:
             return 0
 
         last_transaction = transaction_qs.last()
         return last_transaction.token_bid
+
+    def get_max_bid_users(self):
+        transaction_qs = BidTransaction.objects.filter(item=self)
+        ordered_transaction_qs = transaction_qs.order_by('create_time')
+        if len(transaction_qs) == 0:
+            return []
+
+        current_max_bid = ordered_transaction_qs.last().token_bid
+        max_bid_transaction_qs = transaction_qs.filter(token_bid=current_max_bid)
+        return [trans.user for trans in max_bid_transaction_qs]
 
 
 class BidTransaction(models.Model):

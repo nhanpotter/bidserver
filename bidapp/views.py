@@ -104,14 +104,15 @@ class UserProposeBidAPIView(APIView):
 
         validated_data = serializer.validated_data
         item_id = validated_data.get('item_id')
-        shop_id = validated_data.get('shop_id')
-        item = BidItem.objects.get(item_id=item_id, shop__shop_id=shop_id)
+        item = BidItem.objects.get(item_id=item_id)
         token_threshold = item.token_threshold
-        token_bid = validated_data.get('token_bid')
+        current_token_bid = validated_data.get('token_bid')
         user = validated_data.get('user')
 
+        # TODO: Check if current time > 23:59:00
+
         # Check if user has enough token to bid
-        if token_bid > user.token:
+        if current_token_bid > user.token_balance:
             return Response({'error': ['insufficient token']},
                             status=status.HTTP_400_BAD_REQUEST)
         # Check if item release date is today
@@ -119,37 +120,62 @@ class UserProposeBidAPIView(APIView):
         if item.release_date != today:
             return Response({'error': ['item release_date not today']},
                             status=status.HTTP_400_BAD_REQUEST)
-
-        if token_bid > token_threshold:
+        # Check if user bid <= threshold
+        if current_token_bid > token_threshold:
             return Response({'error': ['token bid > token threshold']},
                             status=status.HTTP_400_BAD_REQUEST)
-        # Check if user overbid previous token bid
-        outbid_user = None
-        current_max_bid = 0
-        transaction_qs = BidTransaction.objects.filter(item=self).order_by('token_bid')
-        if len(transaction_qs) != 0:
-            last_transaction = transaction_qs.last()
-            outbid_user = last_transaction.user
-            current_max_bid = last_transaction.token_bid
+        # Check if user bid > user previous bid
+        user_transaction_qs = BidTransaction.objects.filter(item=item, user=user).order_by('create_time')
+        if user_transaction_qs.exists():
+            previous_token_bid = user_transaction_qs.last().token_bid
+            if previous_token_bid == item.token_threshold or current_token_bid <= previous_token_bid:
+                return Response({'error': ['token bid > previous bid']},
+                                status=status.HTTP_400_BAD_REQUEST)
 
-        if token_bid < token_threshold and token_bid <= current_max_bid:
+        # Check if user overeate user if not exists
+        user_id = request.data.get('user')
+        if user_id is not None:
+            User.objects.get_or_create(user_id=user_id)
+
+        serializer = BidTransactionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        validated_data = serializer.validated_data
+        item_id = validated_data.get('item_id')
+        item = BidItem.objects.get(item_id=item_id)
+        token_threshold = item.token_threshold
+        current_token_bid = validated_data.get('token_bid')
+        user = validated_data.get('user')
+
+        # TODO: Check if current time > 23:59:00
+
+        # Check if user has enough token to bidrbid previous token bid
+        current_max_bid = item.current_max_bid
+        if current_token_bid < token_threshold and current_token_bid <= current_max_bid:
             return Response({'error': ['token bid must > max bid']},
                             status=status.HTTP_400_BAD_REQUEST)
 
         # Deduct user token
-        user.token = user.token - token_bid
+        user.token_balance = user.token_balance - current_token_bid
         user.save()
-        # Create Bid Transaction
-        create_time = int(timezone.now().timestamp())
-        serializer.save(item=item, create_time=create_time)
 
+        # Refund user got outbid
+        outbid_user = None
+        max_bid_users = item.get_max_bid_users()
+        if len(max_bid_users) == 1:
+            outbid_user = max_bid_users[0]
         if outbid_user is not None and current_max_bid < token_threshold:
             outbid_user.token = outbid_user.token + current_max_bid
             outbid_user.save()
 
-        if outbid_user != user:
+        if len(max_bid_users) == 1:
             # TODO: Push notification to user got outbid
             pass
+
+        # Create Bid Transaction
+        create_time = int(timezone.now().timestamp())
+        serializer.save(item=item, create_time=create_time)
 
         return Response(status=status.HTTP_201_CREATED)
 
