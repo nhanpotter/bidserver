@@ -7,7 +7,7 @@ from .models import BidItem, BidTransaction, Shop, User
 from .serializers import BidItemCreateSerializer, BidItemEditSerializer, BidTransactionSerializer, ShopSerializer, \
     ShopViewShopBidItemQuerySerializer, ShopViewTokenQuerySerializer, UserViewShopBidItemQuerySerializer, \
     UserViewWinQuerySerializer
-from .serializers import BidItemSerializer, UserSerializer
+from .serializers import BidItemSerializer, UserSerializer, UserViewBidItemSerializer
 
 
 class ShopViewTokenAPIView(APIView):
@@ -163,4 +163,10 @@ class UserViewWinItem(APIView):
         user_id = query_serializer.validated_data.get('user_id')
         item_list = BidItem.objects.filter(winner=user_id)
         serializer = BidItemSerializer(item_list, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UserViewBidItemAPIView(APIView):
+    def get(self, request, format=None):
+        serializer = UserViewBidItemSerializer(Shop.objects.all(), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

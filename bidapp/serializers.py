@@ -134,3 +134,17 @@ class BidTransactionSerializer(serializers.Serializer):
                                                 token_bid=token_bid,
                                                 create_time=create_time)
         return created
+
+
+class UserViewBidItemSerializer(serializers.ModelSerializer):
+    items = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Shop
+        fields = ['shop_id', 'items']
+
+    def get_items(self, obj):
+        today = timezone.localtime().date()
+        items = BidItem.objects.filter(shop=obj, release_date=today)
+        serializer = BidItemSerializer(items, many=True)
+        return serializer.data
