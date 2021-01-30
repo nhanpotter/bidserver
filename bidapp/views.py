@@ -181,11 +181,11 @@ class UserProposeBidAPIView(APIView):
         if len(max_bid_users) == 1:
             outbid_user = max_bid_users[0]
         if outbid_user is not None and current_max_bid < token_threshold:
-            outbid_user.token = outbid_user.token + current_max_bid
+            outbid_user.token_balance = outbid_user.token_balance + current_max_bid
             outbid_user.save()
 
         # Send notification to user got outbid
-        if outbid_user is not None:
+        if outbid_user is not None and user != outbid_user:
             title = "Outbid"
             content = item.get_outbid_content()
             create_time = int(timezone.now().timestamp())
