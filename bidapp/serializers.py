@@ -176,6 +176,11 @@ class UserViewBidItemPersonalSerializer(serializers.ModelSerializer):
         for bidder in max_bidders:
             if bidder.user_id == user_id:
                 return obj.current_max_bid
+        # Return user last bid on this item if exists
+        transaction_qs = BidTransaction.objects.filter(user__user_id=user_id, item=obj).order_by('create_time')
+        if len(transaction_qs) != 0:
+            return transaction_qs.last().token_bid
+
         return None
 
 

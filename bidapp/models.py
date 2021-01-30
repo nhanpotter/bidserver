@@ -68,6 +68,7 @@ class BidItem(models.Model):
     def get_winner_content(self):
         return 'You have successfully order item {} at a discount price.'.format(self.name)
 
+
 class BidTransaction(models.Model):
     item = models.ForeignKey(BidItem, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
